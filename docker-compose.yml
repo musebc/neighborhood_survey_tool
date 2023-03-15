@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  survey_app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+  postgres:
+    image: "postgres:alpine"
