@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neighborhood-survey-tool-deployment
+spec:
+  selector:
+    matchLabels:
+      app: neighborhood-survey-tool
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: neighborhood-survey-tool
+    spec:
+      containers:
+      - name: neighborhood-survey-tool
+        image: neighborhood-survey-tool:latest
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            cpu: 500m 
+            memory: 512M

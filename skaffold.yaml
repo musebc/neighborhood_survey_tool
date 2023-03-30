@@ -1,0 +1,19 @@
+apiVersion: skaffold/v4beta3
+kind: Config
+metadata:
+  name: neighborhood-survey-tool
+build:
+  artifacts:
+    - image: neighborhood-survey-tool
+      context: . 
+      docker:
+        dockerfile: docker/Dockerfile
+manifests:
+  rawYaml:
+    - kube/deployment.yaml
+
+portForward:
+- resourceType: deployment
+  resourceName: neighborhood-survey-tool-deployment
+  namespace: default
+  port: 8000
