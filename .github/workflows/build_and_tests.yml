@@ -90,4 +90,4 @@ jobs:
 
             - name: Push Image
               run: |
-                docker push --all-tags
+                docker push --all-tags neighborhood_survey_tool
