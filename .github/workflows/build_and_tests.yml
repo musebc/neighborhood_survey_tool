@@ -76,8 +76,7 @@ jobs:
         steps:
             - name: Download Image for Testing
               uses: actions/download-artifact@v2
-              with:
-                name: neighborhood_survey_tool
+
             - name: Load Docker images from previous workflows
               run: |
                 docker load --input neighborhood_survey_tool/neighborhood_survey_tool.tar 
