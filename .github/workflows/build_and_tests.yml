@@ -1,0 +1,96 @@
+name: Build and Test the Neighborhood Survey Tool
+
+on:
+    pull_request: 
+        branches: main
+    push:
+        branches: main
+
+env:
+    REGISTRY: ghcr.io/musebc/neighborhood_survey_tool
+
+
+jobs:
+    build:
+        name: Build the Neighborhood Survey Tool Docker Image
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v2
+
+            - name: Cache Docker layers
+              uses: actions/cache@v3
+              with:
+                path: /tmp/.buildx-cache
+                key: ${{ runner.os }}-nst-${{ github.ref_name }}
+                restore-keys: |
+                    ${{ runner.os }}-nst
+            
+            - name: Build Image
+              uses: docker/build-push-action@v3
+              with:
+                context: .
+                file: docker/Dockerfile
+                tags: |
+                    ${{ env.REGISTRY }}/neighborhood_survey_tool:${{ github.sha }}
+                    ${{ env.REGISTRY }}/neighborhood_survey_tool:latest
+                outputs: type=docker,dest=/tmp/image.tar
+                cache-from: type=gha
+                cache-to: type=gha,mode=max
+
+            - name: Upload Image for Testing
+              uses: actions/upload-artifact@v2
+              with:
+                name: neighborhood_survey_tool
+                path: /tmp/neighborhood_survey_tool.tar
+              
+
+    test:
+        name: Test the Neighborhood Survey Tool Docker Image
+        runs-on: ubuntu-latest
+        needs: build
+        steps:
+            - name: Download Image for Testing
+              uses: actions/download-artifact@v2
+              with:
+                name: neighborhood_survey_tool
+            
+            - name: Load Docker images from previous workflows
+              run: |
+                docker load --input neighborhood_survey_tool/neighborhood_survey_tool.tar
+            
+            - name: Run Docker Image and Verify Healthy
+              run: |
+                docker run --rm -d --name test --health-interval 2s --health-retries 3 --health-start-period 5s --health-cmd 'wget http://localhost:8000/surveys/ || exit 1' -p 8000:8000 ${{ env.REGISTRY }}/neighborhood_survey_tool:latest
+                timeout 60s sh -c 'until docker ps | grep test | grep -q healthy; do echo "Waiting for container to be healthy..."; sleep 2; done'
+                docker stop test
+
+    
+    publish_image_to_registry:
+        name: Publish the Image to the GitHub Container Registry
+        needs: test
+        if: github.event_name != 'pull_request'
+        runs-on: ubuntu-latest
+        permissions:
+            packages: write
+        steps:
+            - name: Download Image for Testing
+              uses: actions/download-artifact@v2
+              with:
+                name: neighborhood_survey_tool
+            - name: Load Docker images from previous workflows
+              run: |
+                docker load --input neighborhood_survey_tool/neighborhood_survey_tool.tar 
+            
+            - name: Log into registry
+              uses: docker/login-action@v2
+              with:
+                registry: ${{ env.REGISTRY }}
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Push Image
+              run: |
+                docker push --all-tags
