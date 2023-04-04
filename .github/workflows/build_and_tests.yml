@@ -41,7 +41,7 @@ jobs:
                 cache-to: type=gha,mode=max
 
             - name: Upload Image for Testing
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v3
               with:
                 name: neighborhood_survey_tool
                 path: /tmp/neighborhood_survey_tool.tar
@@ -53,7 +53,7 @@ jobs:
         needs: build
         steps:
             - name: Download Image for Testing
-              uses: actions/download-artifact@v2
+              uses: actions/download-artifact@v3
             
             - name: Load Docker images from previous workflows
               run: |
@@ -75,7 +75,7 @@ jobs:
             packages: write
         steps:
             - name: Download Image for Testing
-              uses: actions/download-artifact@v2
+              uses: actions/download-artifact@v3
 
             - name: Load Docker images from previous workflows
               run: |
